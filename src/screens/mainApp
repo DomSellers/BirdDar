@@ -1,0 +1,18 @@
+import React from 'react';
+import { NavigationContainer } from '@react-navigation/native'; // Core navigation library
+import { createStackNavigator } from '@react-navigation/stack'; // For stack navigation
+import HomeScreen from './src/screens/HomeScreen'; // Import HomeScreen
+
+const Stack = createStackNavigator(); // Create a stack navigator
+
+export default function App() {
+  return (
+    <NavigationContainer>
+      <Stack.Navigator initialRouteName="Home">
+        {/* Add HomeScreen to the navigator */}
+        <Stack.Screen name="Home" component={HomeScreen} />
+        {/* Add more screens as you create them */}
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+}

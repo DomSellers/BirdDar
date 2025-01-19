@@ -1,74 +1,104 @@
-import { Image, StyleSheet, Platform } from 'react-native';
+import React, { useEffect, useState } from "react";
+import { Image, StyleSheet, FlatList, View, Text } from "react-native";
+import Papa from "papaparse";
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+// Map of bird images
+const birdImages: Record<string, any> = {
+  "northern-cardinal": require("../../assets/images/northern-cardinal.png"),
+  "default": require("../../assets/images/default-bird.png"),
+};
 
-export default function HomeScreen() {
+const BirdSpotter = () => {
+  const [birds, setBirds] = useState([]);
+
+  useEffect(() => {
+    loadBirdData();
+  }, []);
+
+  const loadBirdData = async () => {
+    try {
+      const response = await fetch("http://localhost:8081/assets/data/birds.csv"); // Update with your server's path to the CSV file
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const csvText = await response.text();
+      const parsedData = Papa.parse(csvText, { header: true }).data;
+
+      const formattedData = parsedData.map((bird, index) => ({
+        id: index.toString(),
+        name: bird.name?.trim() || "Unknown Bird",
+        scientific_name: bird.scientific_name?.trim() || "Scientific name not available",
+        image: birdImages[bird.image_url?.trim()] || birdImages["default"], // Use the map for images
+      }));
+
+      setBirds(formattedData);
+    } catch (error) {
+      console.error("Error loading bird data:", error);
+    }
+  };
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12'
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+    <View style={styles.container}>
+      <Text style={styles.header}>Bird Spotter</Text>
+      <FlatList
+        data={birds}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <View style={styles.birdContainer}>
+            <Image source={item.image} style={styles.birdImage} />
+            <View>
+              <Text style={styles.birdName}>{item.name}</Text>
+              <Text style={styles.birdScientific}>{item.scientific_name}</Text>
+            </View>
+          </View>
+        )}
+      />
+    </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  container: {
+    flex: 1,
+    padding: 16,
+    backgroundColor: "#f7f7f7",
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  header: {
+    fontSize: 24,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: 16,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  birdContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+    padding: 8,
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  birdImage: {
+    width: 50,
+    height: 50,
+    marginRight: 16,
+    borderRadius: 25,
+  },
+  birdName: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#000",
+  },
+  birdScientific: {
+    fontSize: 14,
+    fontStyle: "italic",
+    color: "#666",
   },
 });
+
+export default BirdSpotter;
